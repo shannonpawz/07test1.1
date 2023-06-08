@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<!-- Add a radio button -->
+<input type="number" id="buttonYlim" value=41>
+
+<!-- Button -->
+<div>
+  <input type="checkbox" class="checkbox" value="A" checked><label>2019</label>
+  <input type="checkbox" class="checkbox" value="B" checked><label>2020</label>
+  <input type="checkbox" class="checkbox" value="C" checked><label>2021</label>
+  <input type="checkbox" class="checkbox" value="D" checked><label>2022</label>
+  <input type="checkbox" class="checkbox" value="E" checked><label>2023</label>
+</div>
+
+<!-- Load d3.js -->
+<script src="d3.v4.js"></script>
+
+<link rel="stylesheet" href="main.css" />
+    
+<!-- Create a div where the graph will take place -->
+<div id="my_dataviz2"></div>
+
+<script>
+
+// set the dimensions and margins of the graph
+var margin = {top: 50, right: 30, bottom: 60, left: 90},
+    width = 1750 - margin.left - margin.right,
+    height = 925 - margin.top - margin.bottom
+
+// append the svg object to the body of the page
+var Svg = d3.select("#my_dataviz2")
+  .append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+    .style("background-color", "#ffffff")
+
+  //.style('border', '1px solid black')
+  .append("g")
+    .attr("transform",
+          "translate(" + margin.left + "," + margin.top + ")")
+
+//Read the data
+//d3.csv("https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/iris.csv", function(data) {
+  d3.csv("data.csv", function(data) {
+console.log(data)
+
+ // Define x scale
+  var x = d3.scaleLinear()
+  //.domain([25*0.95, 1499*1.001])
+  //.domain([0 , 4000])
+  .domain([30, 1499*1.001])
+  .range([20, width]);
+
+  // Add x axis
+  var xg=Svg.append("g")
+  .attr("class", "myXaxis")
+  .attr("transform", "translate(0," + height + ")")
+  .call(
+    d3.axisBottom(x)
+    .tickSize(-height*3).ticks(7)
+    .tickValues(d3.range(50, 1501, 150))
+    )
+  .select(".domain").remove()
+
+  // Define y scale
+  var y = d3.scaleLinear()
+    //.domain([-0.001, 190*1.01])
+  //  .domain([0, 190*1.01])
+    .domain([0, 200])
+    .range([ height-10, 0])
+    .nice()
+
+    console.log(y(0));
+
+  // Add Y axis
+  var yg = Svg.append("g")
+    .attr("transform", "translate(0,0)")
+  //  .attr("transform", "translate(0," + margin.left + ")")
+
+  var yAxis = yg.call(
+    d3.axisLeft(y))
+    //.tickSize(-width*1.3).ticks(7)
+    //.tickValues(d3.range(0, 201, 10))
+    //.select(".domain").remove()
+
+  // Customization
+  Svg.selectAll(".tick line").attr("stroke", "#e6e4e8")
+
+  // Add title:
+  Svg.append("text")
+      .attr("text-anchor", "end")
+      .attr("x", width)
+      .attr("y", -50)
+      //.html("The Relationship between" + "<br/> Video length and Play Count")
+      .style("Fill", "#643A71")
+      .style("font-size", "30px")
+      .style("font-family", "Gill Sans")
+      .selectAll("tspan")
+    .data(["The Relationship between", "Length and Play Count"])
+    .enter()
+    .append("tspan")
+    .attr("x", width)
+    .attr("dy", "1.2em") // 设置行间距
+    .text(function(d) { return d; });
+
+  // Add X axis label:
+  Svg.append("text")
+      .attr("text-anchor", "end")
+      .attr("x", width)
+      .attr("y", height + margin.top + 0)
+      .text("Play Count(*10k)")
+      .style("Fill", "#796e83");
+
+  // Y axis label:
+  Svg.append("text")
+      .attr("text-anchor", "end")
+      .attr("transform", "rotate(-90)")
+      .attr("y", -margin.left+30)
+      .attr("x", -margin.top+40)
+      .text("Video Length(min)")
+      .style("Fill", "#796e83");
+
+  // Color scale: give me a specie name, I return a color
+  var color = d3.scaleOrdinal()
+    //.domain(["2019-3", "2020-3", "2021-3", "2022-3", "2023-3" ])
+    .domain(["A", "B", "C", "D", "E" ])
+    .range([ "#4C4C9D", "#F9E784", "#E58F65", "#D05353", "#643A71"])
+
+   // Add a tooltip div. Here I define the general feature of the tooltip: stuff that do not depend on the data point.
+  // Its opacity is set to 0: we don't see it by default.
+  var tooltip = d3.select("#my_dataviz2")
+    .append("div")
+    .style("opacity", 0)
+    .attr("class", "tooltip")
+    .style("background-color", "#faf8ef")
+    //.style("border", "solid")
+    .style("border-radius", "5px")
+    .style("padding", "10px")
+    .style("color", "#E58F65")
+
+  // A function that change this tooltip when the user hover a point.
+  // Its opacity is set to 1: we can now see it. Plus it set the text and position of tooltip depending on the datapoint (d)
+  //var mouseover = function(d) {
+    //tooltip
+      //.style("opacity", 1)}
+
+  var showTooltip = function(d) {
+      tooltip
+        .transition()
+        .duration(200)
+      tooltip
+        .style("opacity", 1)
+        .html("Video Length: " + d.Video_Length + " min" + "<br/>Play Count: " + d.Play_Count + "(*10k)")
+        .style("left", (d3.mouse(this)[0]+30) + "px")
+        .style("top", (d3.mouse(this)[1]+30) + "px")
+     d3.select(this)
+    .transition()
+    .duration(200)
+    .attr("r", 15); 
+    }
+
+  //var mousemove = function(d) {
+    //tooltip
+      //.html("Video Length: " + d.Video_Length + " min" + "<br/>Play Count: " + d.Play_Count + "(*10k)")
+      //.style("left", (d3.mouse(this)[0]+70) + "px")
+      //.style("top", (d3.mouse(this)[1]) + "px")
+    //.style("left", (d3.event.pageX + 10) + "px")
+    //.style("top", (d3.event.pageY - 10) + "px")
+
+  var moveTooltip = function(d) {
+      tooltip
+        .style("left", (d3.mouse(this)[0]+30) + "px")
+        .style("top", (d3.mouse(this)[1]+30) + "px")
+    }
+
+  // A function that change this tooltip when the leaves a point: just need to set opacity to 0 again
+  //var mouseleave = function(d) {
+   // tooltip
+      //.transition()
+      //.duration(200)
+      //.style("opacity", 0)
+  
+  var hideTooltip = function(d) {
+      tooltip
+        .transition()
+        .duration(200)
+        .style("opacity", 0)
+    d3.select(this)
+    .transition()
+    .duration(200)
+    .attr("r", 8);
+    }
+
+  // Add dots
+  Svg.append('g')
+    .selectAll("dot")
+    .data(data) 
+    .enter()
+    .append("circle")
+      //.attr("class", function (d) { return "dot " + d.year } )
+      .attr("class" , function(d){ return d.year })
+      .attr("cx", function (d) { return x(d.Play_Count); } )
+      .attr("cy", function (d) { return y(d.Video_Length); } )
+      .attr("r", 12)
+      .style("fill", function (d) { return color(d.year) } )
+      .attr("fill-opacity", .8)
+      .on("mouseover", showTooltip )
+      .on("mousemove", moveTooltip )
+      .on("mouseleave", hideTooltip )
+
+      //.on("mouseover", highlight)
+      //.on("mouseleave", doNotHighlight )
+
+// This function is gonna change the opacity and size of selected and unselected circles
+function update(){
+
+// For each check box:
+d3.selectAll(".checkbox").each(function(d){
+  cb = d3.select(this);
+  grp = cb.property("value")
+  
+  // If the box is check, I show the group
+  if(cb.property("checked")){
+    Svg.selectAll("."+grp).transition().duration(1000).style("opacity", 1)
+    .attr("r", 8)
+
+  // Otherwise I hide it
+  }else{
+    Svg.selectAll("."+grp).transition().duration(1000).style("opacity", 0).attr("r", 0)
+  }
+})
+}
+
+// When a button change, I run the update function
+d3.selectAll(".checkbox").on("change",update);
+
+// And I initialize it at the beginning
+update()
+
+
+
+// A function that update the plot for a given xlim value
+function updatePlot() {
+
+// Get the value of the button
+ylim = this.value
+
+// Update Y axis
+//y = d3.scaleLinear()
+//.domain([0, ylim])
+y.domain([0, ylim])
+//yg = Svg.append("g")
+//.attr("transform", "translate(0,0)")
+//.attr("transform", "translate(0," + margin.left + ")")
+yAxis.transition().duration(1000)
+yAxis.call(d3.axisLeft(y))
+//.select(".domain").remove()
+
+// Update chart
+Svg.selectAll("circle")
+   .data(data)
+   .transition()
+   .duration(1000)
+   .attr("cx", function (d) { return x(d.Play_Count); } )
+   .attr("cy", function (d) { return y(d.Video_Length); } )
+}
+
+// Add an event listener to the button created in the html part
+d3.select("#buttonYlim").on("input", updatePlot )
+})
+</script>
